@@ -334,13 +334,13 @@ Would you like to delete these files?
     <value>Only moved the "{0}" directories to the new location</value>
   </data>
   <data name="ProjectLink" xml:space="preserve">
-    <value>https://github.com/MapleToo/GTAW-Log-Parser</value>
+    <value>https://github.com/AdvGTAW/GTAW-Log-Parser</value>
   </data>
   <data name="Question" xml:space="preserve">
     <value>Question</value>
   </data>
   <data name="ReleasesLink" xml:space="preserve">
-    <value>https://github.com/MapleToo/GTAW-Log-Parser/releases</value>
+    <value>https://github.com/AdvGTAW/GTAW-Log-Parser/releases</value>
   </data>
   <data name="Restart" xml:space="preserve">
     <value>Restart</value>

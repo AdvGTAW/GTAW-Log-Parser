@@ -19,7 +19,7 @@ namespace Assistant.Localization {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -649,7 +649,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to https://github.com/MapleToo/GTAW-Log-Parser.
+        ///   Looks up a localized string similar to https://github.com/AdvGTAW/GTAW-Log-Parser.
         /// </summary>
         internal static string ProjectLink {
             get {
@@ -667,7 +667,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to https://github.com/MapleToo/GTAW-Log-Parser/releases.
+        ///   Looks up a localized string similar to https://github.com/AdvGTAW/GTAW-Log-Parser/releases.
         /// </summary>
         internal static string ReleasesLink {
             get {
