@@ -5,7 +5,7 @@ This program is used to convert the chat logs generated while playing on GTA Wor
 
 ## Getting Started
 
-No installation is required. Simply download the latest [release](https://github.com/MapleToo/GTAW-Log-Parser/releases) and run the executable.
+No installation is required. Simply download the latest [release](https://github.com/AdvGTAW/GTAW-Log-Parser/releases) and run the executable.
 
 ## Building
 
