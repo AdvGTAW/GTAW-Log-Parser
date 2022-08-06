@@ -115,18 +115,18 @@ namespace Assistant.Controllers
                     log = sr.ReadToEnd();
                 }
 
-                // Grab the chat log part from the .storage file
-                log = Regex.Match(log, "\\\"chat_log\\\":\\\".+\\\\n\\\"").Value;
+
+
+                // Use REGEX to parse the chat_log section only. Why REGEX? It's way faster than loading the massive JSON object in memory and then getting only the chat_log part. 
+
+                log = Regex.Match(log, "(?<=chat_log\\\":\\\")(.*?)(?=\\\\n\\\",\\\"rememberuser)").Value;
+
                 if (string.IsNullOrWhiteSpace(log))
                     throw new IndexOutOfRangeException();
 
-                // Q: Why REGEX? A: Way faster than parsing the JSON object
-                log = log.Replace("\"chat_log\":\"", string.Empty); // Remove the chat log indicator
-                log = log.Replace("\\n", "\n");                     // Change all occurrences of `\n` into new lines
-                log = log.Remove(log.Length - 1, 1);                // Remove the `"` character from the end
 
-                log = System.Net.WebUtility.HtmlDecode(log);    // Decode HTML symbols (example: `&apos;` into `'`)
-                log = log.TrimEnd('\r', '\n');                  // Remove the `new line` characters from the end
+                log = System.Net.WebUtility.HtmlDecode(log);
+                log = log.Replace("\\n", "\n");
 
                 PreviousLog = log;
                 if (removeTimestamps)
