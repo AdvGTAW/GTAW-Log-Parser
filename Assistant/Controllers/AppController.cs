@@ -18,7 +18,7 @@ namespace Assistant.Controllers
         public static bool CanFollowSystemMode = false;
 
         public const string ParameterPrefix = "--";
-        public const string ProcessName = "ragemp_v";
+        public const string ProcessName = "GTA5";
         public const string ProductHeader = "GTAW-Log-Parser";
         public static string ResourceDirectory;
         public static string LogLocation;
