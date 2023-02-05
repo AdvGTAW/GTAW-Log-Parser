@@ -11,7 +11,7 @@ namespace Assistant.Controllers
 {
     public static class AppController
     {
-        public const string AssemblyVersion = "4.1.5";
+        public const string AssemblyVersion = "4.1.6";
         public static readonly string Version = $"v{AssemblyVersion}";
         public const bool IsBetaVersion = false;
         public static bool CanFollowSystemColor = false;
