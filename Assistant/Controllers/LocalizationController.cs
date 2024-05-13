@@ -7,7 +7,7 @@ namespace Assistant.Controllers
 {
     public static class LocalizationController
     {
-        private static string currentLanguage = string.Empty;
+        private static string currentLanguage { get; set; } = string.Empty;
         public enum Language { English, Spanish }
 
         // Link enum values to language codes
@@ -25,14 +25,26 @@ namespace Assistant.Controllers
         /// <param name="save"></param>
         public static void InitializeLocale(bool save = false)
         {
-            if (string.IsNullOrWhiteSpace(currentLanguage))
-                currentLanguage = Properties.Settings.Default.LanguageCode;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(currentLanguage))
+                    currentLanguage = Properties.Settings.Default.LanguageCode;
 
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(currentLanguage);
+                if (!string.IsNullOrWhiteSpace(currentLanguage))
+                {
+                    Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(currentLanguage);
 
-            if (!save) return;
-            Properties.Settings.Default.LanguageCode = currentLanguage;
-            Properties.Settings.Default.Save();
+                    if (save)
+                    {
+                        Properties.Settings.Default.LanguageCode = currentLanguage;
+                        Properties.Settings.Default.Save();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InitializeLocale: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -53,11 +65,23 @@ namespace Assistant.Controllers
         /// <param name="save"></param>
         public static void SetLanguage(Language language, bool save = true)
         {
-            if (!Languages.ContainsKey(language))
-                language = Language.English;
-
-            currentLanguage = Languages[language];
-            InitializeLocale(save);
+            try
+            {
+                if (Languages.ContainsKey(language))
+                {
+                    currentLanguage = Languages[language];
+                    InitializeLocale(save);
+                }
+                else
+                {
+                    currentLanguage = Languages[Language.English];
+                    InitializeLocale(save);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SetLanguage: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -69,7 +93,16 @@ namespace Assistant.Controllers
         /// <returns></returns>
         public static string GetLanguageFromCode(string code)
         {
-            return Languages.FirstOrDefault(x => x.Value == code).Key.ToString();
+            try
+            {
+                var language = Languages.FirstOrDefault(x => x.Value == code).Key;
+                return language.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetLanguageFromCode: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -81,10 +114,18 @@ namespace Assistant.Controllers
         /// <returns></returns>
         public static string GetCodeFromLanguage(Language language)
         {
-            if (!Languages.ContainsKey(language))
-                language = Language.English;
-
-            return Languages[language];
+            try
+            {
+                if (Languages.ContainsKey(language))
+                    return Languages[language];
+                else
+                    return Languages[Language.English];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetCodeFromLanguage: {ex.Message}");
+                return null;
+            }
         }
     }
 }
