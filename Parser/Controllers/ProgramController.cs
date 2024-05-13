@@ -32,53 +32,33 @@ namespace Parser.Controllers
                 ResourceDirectory = "Not Found";
                 LogLocation = $"client_resources\\{@"play.gta.world_22005"}\\.storage";
 
-                // Return if the user has not picked
-                // a RAGEMP directory path yet
+                // Get the directory path from user settings
+                // Return if the user has not picked a RAGEMP directory path yet
                 string directoryPath = Properties.Settings.Default.DirectoryPath;
                 if (string.IsNullOrWhiteSpace(directoryPath)) return;
 
                 // Get every directory in the client_resources directory found inside directoryPath
-                string[] resourceDirectories = Directory.GetDirectories(directoryPath + @"\client_resources");
+                string clientResourcesPath = Path.Combine(directoryPath, "client_resources");
+                if (!Directory.Exists(clientResourcesPath)) return;
 
-                // Store each GTA W .storage file path in a List (found by a tag in the .storage file)
-                List<string> potentialLogs = new List<string>();
-                foreach (string resourceDirectory in resourceDirectories)
-                {
-                    if (!File.Exists(resourceDirectory + @"\.storage"))
-                        continue;
-
-                    string log;
-                    using (StreamReader sr = new StreamReader(resourceDirectory + @"\.storage"))
-                    {
-                        log = sr.ReadToEnd();
-                    }
-
-                    if (!Regex.IsMatch(log, "\\\"server_version\\\":\\\"GTA World[^\"]*\""))
-                        continue;
-
-                    potentialLogs.Add(resourceDirectory);
-                }
+                // Get all ".storage" files in the client resources directory
+                var potentialLogs = Directory.GetFiles(clientResourcesPath, "*.storage")
+                                             // Filter files that contain the server version tag
+                                             .Where(file => Regex.IsMatch(File.ReadAllText(file), "\\\"server_version\\\":\\\"GTA World[^\"]*\""))
+                                             // Order files by last write time in descending order
+                                             .OrderByDescending(file => new FileInfo(file).LastWriteTimeUtc)
+                                             .ToList();
 
                 if (potentialLogs.Count == 0) return;
+                string latestLog = potentialLogs[0];
 
-                // Compare the last write time on all .storage files in the List to find the latest one
-                foreach (var file in potentialLogs.Select(log => new FileInfo(log + @"\.storage")))
-                {
-                    file.Refresh();
-                }
-
-                while (potentialLogs.Count > 1)
-                {
-                    potentialLogs.Remove(DateTime.Compare(File.GetLastWriteTimeUtc(potentialLogs[0] + @"\.storage"), File.GetLastWriteTimeUtc(potentialLogs[1] + @"\.storage")) > 0 ? potentialLogs[1] : potentialLogs[0]);
-                }
-
-                // Save the directory name that houses the latest .storage file
-                int finalSeparator = potentialLogs[0].LastIndexOf(@"\", StringComparison.Ordinal);
+                // Find the index of the last directory separator
+                int finalSeparator = latestLog.LastIndexOf(Path.DirectorySeparatorChar);
                 if (finalSeparator == -1) return;
 
-                // Finally, set the log location
-                ResourceDirectory = potentialLogs[0].Substring(finalSeparator + 1, potentialLogs[0].Length - finalSeparator - 1);
-                LogLocation = $"client_resources\\{ResourceDirectory}\\.storage";
+                // Finally, set the log location & extract the directory name from the latest log file path
+                ResourceDirectory = latestLog.Substring(finalSeparator + 1);
+                LogLocation = Path.Combine("client_resources", ResourceDirectory, ".storage");
             }
             catch
             {
@@ -100,35 +80,51 @@ namespace Parser.Controllers
             try
             {
                 // Read the chat log
+                string logFilePath = Path.Combine(directoryPath, LogLocation);
+                if (!File.Exists(logFilePath))
+                {
+                    throw new FileNotFoundException($"Chat log file not found: {logFilePath}");
+                }
+
                 string log;
-                using (StreamReader sr = new StreamReader(directoryPath + LogLocation))
+                using (StreamReader sr = new StreamReader(logFilePath))
                 {
                     log = sr.ReadToEnd();
                 }
 
-
-                // Use REGEX to parse the chat_log section only. Why REGEX? It's way faster than loading the massive JSON object in memory and then getting only the chat_log part. 
-
-
+                // Use REGEX to parse the chat_log section only.
+                // Why REGEX? It's way faster than loading the massive JSON object in memory and then getting only the chat_log part.
                 log = Regex.Match(log, "(?<=chat_log\\\":\\\")(.*?)(?=\\\\n\\\",\\\"rememberuser)").Value;
 
                 if (string.IsNullOrWhiteSpace(log))
-                    throw new IndexOutOfRangeException();
+                {
+                    throw new FormatException("Chat log is empty or in an incorrect format.");
+                }
 
-
-                log = System.Net.WebUtility.HtmlDecode(log);
+                log = WebUtility.HtmlDecode(log);
                 log = log.Replace("\\n", "\n");
 
                 if (removeTimestamps)
+                {
                     log = Regex.Replace(log, @"\[\d{1,2}:\d{1,2}:\d{1,2}\] ", string.Empty);
+                }
 
                 return log;
             }
-            catch
+            catch (FileNotFoundException ex)
             {
-                MessageBox.Show(Strings.ParseError, Strings.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return string.Empty;
+                MessageBox.Show($"Error: {ex.Message}", Strings.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            catch (FormatException ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", Strings.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unexpected error occurred: {ex.Message}", Strings.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return string.Empty;
         }
     }
 }
