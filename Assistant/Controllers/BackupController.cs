@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Threading;
 using System.Diagnostics;
+using System.Linq;
 using System.Diagnostics.CodeAnalysis;
 using Assistant.Utilities;
 using Assistant.Localization;
@@ -127,7 +128,9 @@ namespace Assistant.Controllers
         {
             while (!Quitting && runBackgroundBackup)
             {
-                Process[] processes = Process.GetProcessesByName(AppController.ProcessName);
+                Process[] processes = Process.GetProcesses()
+                    .Where(p => AppController.ProcessNames.Contains(p.ProcessName))
+                    .ToArray();
 
                 if (!isGameRunning && processes.Length != 0)
                     isGameRunning = true;

@@ -11,7 +11,7 @@ namespace Parser.Controllers
 {
     public static class ProgramController
     {
-        public const string AssemblyVersion = "4.1.7";
+        public const string AssemblyVersion = "4.1.8";
         public static readonly string Version = $"v{AssemblyVersion}";
         public const bool IsBetaVersion = false;
         public const string ParameterPrefix = "--";
