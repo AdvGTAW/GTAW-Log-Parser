@@ -2,12 +2,9 @@
 using System.IO;
 using System.Windows;
 using System.Threading;
-using System.Diagnostics;
-using System.Linq;
 using System.Diagnostics.CodeAnalysis;
 using Assistant.Utilities;
 using Assistant.Localization;
-using System.Text.RegularExpressions;
 
 namespace Assistant.Controllers
 {
@@ -16,7 +13,6 @@ namespace Assistant.Controllers
         private static Thread backupThread;
         private static Thread intervalThread;
 
-        private static string directoryPath;
         private static string backupPath;
 
         private static bool enableAutomaticBackup;
@@ -52,7 +48,6 @@ namespace Assistant.Controllers
         [SuppressMessage("ReSharper", "InvertIf")]
         public static void Initialize()
         {
-            directoryPath = Properties.Settings.Default.DirectoryPath;
             backupPath = Properties.Settings.Default.BackupPath;
 
             enableAutomaticBackup = Properties.Settings.Default.BackupChatLogAutomatically;
@@ -60,8 +55,8 @@ namespace Assistant.Controllers
 
             if (string.IsNullOrWhiteSpace(backupPath) || !Directory.Exists(backupPath))
                 return;
-            if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath + "\\client_resources"))
-                return;
+
+            FiveMChatCaptureController.Initialize();
 
             ResumeIfQueuedToStop();
 
@@ -128,13 +123,11 @@ namespace Assistant.Controllers
         {
             while (!Quitting && runBackgroundBackup)
             {
-                Process[] processes = Process.GetProcesses()
-                    .Where(p => AppController.ProcessNames.Contains(p.ProcessName))
-                    .ToArray();
+                bool fiveMRunning = AppController.IsFiveMRunning();
 
-                if (!isGameRunning && processes.Length != 0)
+                if (!isGameRunning && fiveMRunning)
                     isGameRunning = true;
-                else if (isGameRunning && processes.Length == 0)
+                else if (isGameRunning && !fiveMRunning)
                 {
                     isGameRunning = false;
                     ParseThenSaveToFile(true);
@@ -153,7 +146,7 @@ namespace Assistant.Controllers
             {
                 int intervalTime = Properties.Settings.Default.IntervalTime;
 
-                if (isGameRunning && File.Exists(directoryPath + AppController.LogLocation))
+                if (isGameRunning && File.Exists(FiveMChatCaptureController.SessionFilePath))
                     ParseThenSaveToFile();
 
                 for (int i = 0; i < intervalTime * 6; i++)
@@ -175,36 +168,14 @@ namespace Assistant.Controllers
         {
             try
             {
-                AppController.InitializeServerIp();
-
                 // Parse the chat log
-                string parsed = AppController.ParseChatLog(directoryPath, Properties.Settings.Default.RemoveTimestampsFromBackup, gameClosed);
+                string parsed = AppController.ParseChatLog(Properties.Settings.Default.RemoveTimestampsFromBackup, gameClosed);
                 if (string.IsNullOrWhiteSpace(parsed))
                     return;
 
-                // Store the first line of the chat log: [DATE: 14/NOV/2018 | TIME: 15:44:39]
-                string fileName = parsed.Substring(0, parsed.IndexOf("\n", StringComparison.Ordinal));
-
-                // Get the date from the fileName and replace slashes: 14.NOV.2018
-                string fileNameDate = Regex.Match(fileName, @"\d{1,2}\/[A-Za-z]{3}\/\d{4}").ToString();
-                fileNameDate = fileNameDate.Replace("/", ".");
-
-                // Get the year and the month from the fileName
-                string year = Regex.Match(fileNameDate, @"\d{4}").ToString();
-                string month = Regex.Match(fileNameDate, @"[A-Za-z]{3}").ToString();
-
-                // Get the time from the fileName and replace colons: 15.44.39
-                string fileNameTime = Regex.Match(fileName, @"\d{1,2}:\d{1,2}:\d{1,2}").ToString();
-                fileNameTime = fileNameTime.Replace(":", ".");
-
-                // Throw error if the chat log format is incorrect
-                if (string.IsNullOrWhiteSpace(fileName) || string.IsNullOrWhiteSpace(fileNameDate) || string.IsNullOrWhiteSpace(fileNameTime) || string.IsNullOrWhiteSpace(year) || string.IsNullOrWhiteSpace(month))
-                    throw new IOException();
-
-                // Create the final file name: 14.NOV.2018-15.44.39
-                // and the file path categorized under the year and month
-                fileName = fileNameDate + "-" + fileNameTime + ".txt";
-                string path = $"{backupPath}{year}\\{month}\\";
+                DateTime startedAt = FiveMChatCaptureController.SessionStartedAt;
+                string fileName = startedAt.ToString("dd.MMM.yyyy-HH.mm.ss") + ".txt";
+                string path = Path.Combine(backupPath, startedAt.ToString("yyyy"), startedAt.ToString("MMM")) + Path.DirectorySeparatorChar;
 
                 // Make sure directory exists
                 if (!Directory.Exists(path))

@@ -124,7 +124,7 @@ Installed Version: {0} {1}
 Resource Directory: {2}</value>
   </data>
   <data name="BadDirectoryPath" xml:space="preserve">
-    <value>Please pick a non-root directory for your RAGEMP directory location.</value>
+    <value>FiveM does not require a game directory to parse the local GTAW chat.</value>
   </data>
   <data name="Beta" xml:space="preserve">
     <value>Beta</value>
@@ -139,7 +139,7 @@ Resource Directory: {2}</value>
     <value>Information</value>
   </data>
   <data name="InvalidDirectoryPath" xml:space="preserve">
-    <value>Invalid RAGEMP directory path.</value>
+    <value>The local FiveM GTAW chat is unavailable.</value>
   </data>
   <data name="MainIP" xml:space="preserve">
     <value>51.178.79.228_22005</value>

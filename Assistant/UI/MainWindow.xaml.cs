@@ -26,8 +26,6 @@ namespace Assistant.UI
         private GitHubClient _client;
         private bool _isUpdateCheckRunning;
         private bool _isUpdateCheckManual;
-        private readonly bool _isLoading;
-
         private static bool isRestarting;
 
         /// <summary>
@@ -36,7 +34,6 @@ namespace Assistant.UI
         /// <param name="startMinimized"></param>
         public MainWindow(bool startMinimized)
         {
-            _isLoading = true;
             _client = new GitHubClient(new ProductHeaderValue(AppController.ProductHeader));
             _client.SetRequestTimeout(new TimeSpan(0, 0, 0, Properties.Settings.Default.UpdateCheckTimeout));
             StartupController.InitializeShortcut();
@@ -47,12 +44,10 @@ namespace Assistant.UI
             if (startMinimized)
                 _trayIcon.Visible = true;
 
-            // Also checks for the RAGEMP directory on the first start
             LoadSettings();
 
             SetupServerList();
             BackupController.Initialize();
-            _isLoading = false;
         }
 
         /// <summary>
@@ -103,7 +98,6 @@ namespace Assistant.UI
         /// </summary>
         private void SaveSettings()
         {
-            Properties.Settings.Default.DirectoryPath = DirectoryPath.Text;
             Properties.Settings.Default.RemoveTimestamps = RemoveTimestamps.IsChecked == true;
             Properties.Settings.Default.CheckForUpdatesAutomatically = CheckForUpdatesOnStartup.IsChecked == true;
 
@@ -134,110 +128,8 @@ namespace Assistant.UI
             RemoveTimestamps.IsChecked = Properties.Settings.Default.RemoveTimestamps;
             CheckForUpdatesOnStartup.IsChecked = Properties.Settings.Default.CheckForUpdatesAutomatically;
 
-            if (Properties.Settings.Default.FirstStart)
-            {
-                Properties.Settings.Default.FirstStart = false;
-                Properties.Settings.Default.Save();
-
-                LookForMainDirectory();
-                SaveSettings();
-            }
-            else
-                DirectoryPath.Text = Properties.Settings.Default.DirectoryPath;
-        }
-
-        /// <summary>
-        /// Looks for the main RAGEMP directory
-        /// path on the first start
-        /// </summary>
-        private void LookForMainDirectory()
-        {
-            try
-            {
-                var keyValue = Registry.GetValue(@"HKEY_CURRENT_USER\Software\RAGE-MP", "rage_path", null);
-                if (keyValue != null)
-                {
-                    DirectoryPath.Text = keyValue + @"\";
-                    MessageBox.Show(string.Format(Strings.DirectoryFinder, DirectoryPath.Text), Strings.DirectoryFinderTitle, MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    throw new IOException();
-                }
-            }
-            catch
-            {
-                MessageBox.Show(Strings.DirectoryFinderNotFound, Strings.DirectoryFinderTitle, MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        /// <summary>
-        /// Saves the settings when the
-        /// value of the text box changes
-        /// and disables automatic backup
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void DirectoryPath_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isLoading)
-                return;
-
-            if (Properties.Settings.Default.BackupChatLogAutomatically)
-            {
-                BackupSettingsWindow.ResetSettings();
-
-                StatusLabel.Content = string.Format(Strings.BackupStatus, Strings.Disabled);
-                MessageBox.Show(Strings.BackupTurnedOff, Strings.Information, MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            SaveSettings();
-        }
-
-        /// <summary>
-        /// Opens the directory picker
-        /// when the text box is clicked on
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void DirectoryPath_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(DirectoryPath.Text))
-                Browse_Click(this, null);
-        }
-
-        /// <summary>
-        /// Displays a directory picker until
-        /// a non-root directory is selected
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Browse_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Forms.FolderBrowserDialog directoryBrowserDialog = new System.Windows.Forms.FolderBrowserDialog
-            {
-                Description = @"RAGEMP Directory Path",
-                RootFolder = Environment.SpecialFolder.MyComputer,
-                SelectedPath = string.IsNullOrWhiteSpace(DirectoryPath.Text) || !Directory.Exists(DirectoryPath.Text) ? Path.GetPathRoot(Environment.SystemDirectory) : DirectoryPath.Text,
-                ShowNewFolderButton = false
-            };
-
-            bool validLocation = false;
-            while (!validLocation)
-            {
-                if (directoryBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    if (directoryBrowserDialog.SelectedPath[directoryBrowserDialog.SelectedPath.Length - 1] != '\\')
-                    {
-                        DirectoryPath.Text = directoryBrowserDialog.SelectedPath + "\\";
-                        validLocation = true;
-                    }
-                    else
-                        MessageBox.Show(Strings.BadDirectoryPath, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                else
-                    validLocation = true;
-            }
+            Properties.Settings.Default.FirstStart = false;
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
@@ -248,23 +140,8 @@ namespace Assistant.UI
         /// <param name="e"></param>
         private void Parse_Click(object sender, RoutedEventArgs e)
         {
-            // The paths may have changed since the program has
-            // started, we need to initialize the locations again
             AppController.InitializeServerIp();
-
-            if (string.IsNullOrWhiteSpace(DirectoryPath.Text) || !Directory.Exists(DirectoryPath.Text + "client_resources\\"))
-            {
-                MessageBox.Show(Strings.InvalidDirectoryPath, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            if (!File.Exists(DirectoryPath.Text + AppController.LogLocation))
-            {
-                MessageBox.Show(Strings.NoChatLog, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            Parsed.Text = AppController.ParseChatLog(DirectoryPath.Text, RemoveTimestamps.IsChecked == true, true);
+            Parsed.Text = AppController.ParseChatLog(RemoveTimestamps.IsChecked == true, true);
         }
 
         /// <summary>
@@ -354,7 +231,7 @@ namespace Assistant.UI
         /// <param name="e"></param>
         private void RemoveTimestamps_CheckedChanged(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(Parsed.Text) || string.IsNullOrWhiteSpace(DirectoryPath.Text) || !Directory.Exists(DirectoryPath.Text + "client_resources\\") || !File.Exists(DirectoryPath.Text+ AppController.LogLocation))
+            if (string.IsNullOrWhiteSpace(Parsed.Text))
                 return;
 
             if (RemoveTimestamps.IsChecked == true)
@@ -380,8 +257,6 @@ namespace Assistant.UI
                 Parse.IsEnabled = enable;
                 SaveParsed.IsEnabled = enable;
                 CopyParsedToClipboard.IsEnabled = enable;
-                DirectoryPath.IsEnabled = enable;
-                Browse.IsEnabled = enable;
                 Parsed.IsEnabled = enable;
                 CheckForUpdatesOnStartup.IsEnabled = enable;
                 RemoveTimestamps.IsEnabled = enable;
@@ -551,12 +426,6 @@ namespace Assistant.UI
         private static BackupSettingsWindow backupSettings;
         private void BackupSettingsToolStripMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(DirectoryPath.Text) || !Directory.Exists(DirectoryPath.Text + "client_resources\\"))
-            {
-                MessageBox.Show(Strings.InvalidDirectoryPathBackup, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             if (Properties.Settings.Default.BackupChatLogAutomatically)
             {
                 if (!Properties.Settings.Default.DisableWarningPopups && MessageBox.Show(Strings.BackupWillBeOff, Strings.Warning, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
@@ -596,12 +465,6 @@ namespace Assistant.UI
         private static ChatLogFilterWindow chatLogFilter;
         private void FilterChatLogToolStripMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(DirectoryPath.Text) || !Directory.Exists(DirectoryPath.Text + "client_resources\\"))
-            {
-                MessageBox.Show(Strings.InvalidDirectoryPathFilter, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             SaveSettings();
 
             if (chatLogFilter == null)

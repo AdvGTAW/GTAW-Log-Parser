@@ -1,5 +1,8 @@
-# GTA World Chat Log Assistant
-This program is used to convert the chat logs generated while playing on GTA World into readable text.
+# GTA World Chat Log Assistant - FiveM Adaptation
+
+This independent working copy captures the GTA World chat displayed by FiveM's local NUI and keeps the parser's automatic backup and filtering workflow.
+
+It captures the GTA World chat displayed by FiveM's local NUI while preserving the parser's backup and filtering workflow.
 
 ![](header.png)
 

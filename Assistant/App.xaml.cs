@@ -123,6 +123,7 @@ namespace Assistant
         {
             StyleController.StopWatchers();
             BackupController.Quitting = true;
+            FiveMChatCaptureController.Stop();
         }
     }
 }
