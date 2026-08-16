@@ -185,7 +185,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please pick a non-root directory for your RAGEMP directory location..
+        ///   Looks up a localized string similar to FiveM does not require a game directory to capture the local GTAW chat..
         /// </summary>
         internal static string BadDirectoryPath {
             get {
@@ -230,9 +230,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Automatically found your RAGEMP directory at {0}
-        ///
-        ///Please browse for the correct path manually if this is incorrect or you have multiple RAGEMP installations..
+        ///   Looks up a localized string similar to The local FiveM GTAW chat is captured automatically..
         /// </summary>
         internal static string DirectoryFinder {
             get {
@@ -241,7 +239,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An error occurred while trying to automatically find the location of your RAGEMP directory, please browse for it manually..
+        ///   Looks up a localized string similar to An error occurred while checking the local FiveM GTAW chat..
         /// </summary>
         internal static string DirectoryFinderError {
             get {
@@ -250,7 +248,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Couldn&apos;t detect the path to your RAGEMP directory, please browse for it manually..
+        ///   Looks up a localized string similar to Couldn&apos;t detect the local FiveM GTAW chat. Open FiveM and join the server first..
         /// </summary>
         internal static string DirectoryFinderNotFound {
             get {
@@ -410,7 +408,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RAGEMP directory path..
+        ///   Looks up a localized string similar to The local FiveM GTAW chat is unavailable..
         /// </summary>
         internal static string InvalidDirectoryPath {
             get {
@@ -419,7 +417,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please choose a valid RAGEMP directory location before trying to enable automatic backup..
+        ///   Looks up a localized string similar to Open FiveM and join GTAW before enabling automatic backup..
         /// </summary>
         internal static string InvalidDirectoryPathBackup {
             get {
@@ -428,7 +426,7 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please choose a valid RAGEMP directory location before trying to filter your chat log..
+        ///   Looks up a localized string similar to Open FiveM and join GTAW before filtering the chat log..
         /// </summary>
         internal static string InvalidDirectoryPathFilter {
             get {
@@ -696,11 +694,9 @@ namespace Assistant.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The same chat log has been backed up {0} or more times, which means that the RAGEMP client script responsible for logging your chat is broken.
+        ///   Looks up a localized string similar to The same chat capture has been backed up {0} or more times. FiveM may be disconnected from GTAW or its local chat is unavailable.
         ///
-        ///This happens when you lose internet connection or the server crashes. The only known way of fixing the issue is deleting the resource directories for the server you are playing on.
-        ///
-        ///Lost chat logs cannot be recovered..
+        ///Open FiveM and rejoin the server, then try again..
         /// </summary>
         internal static string SameHashWarning {
             get {

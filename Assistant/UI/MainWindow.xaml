@@ -12,7 +12,7 @@
                       Closing="Main_Closing"
                       WindowTransitionsEnabled="True"
                       GlowBrush="{DynamicResource AccentColorBrush}"
-                      Title="GTA World Chat Log Assistant" Height="260" Width="638" IsMaxRestoreButtonEnabled="False" IsMinButtonEnabled="True" TitleCaps="False" ShowIconOnTitleBar="False" Icon="../Resources/AppIcon.ico">
+                      Title="GTA World FiveM Chat Log Assistant" Height="260" Width="638" IsMaxRestoreButtonEnabled="False" IsMinButtonEnabled="True" TitleCaps="False" ShowIconOnTitleBar="False" Icon="../Resources/AppIcon.ico">
 
     <Controls:MetroWindow.WindowButtonCommands>
         <Controls:WindowButtonCommands 
@@ -82,11 +82,8 @@
                                    VerticalAlignment="Top"
                                    Visibility="Collapsed" Margin="210,145,0,0"/>
 
-            <Label x:Name="PathLabel" Content="RAGEMP Directory:" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Margin="298,0,0,0" VerticalAlignment="Top"/>
             <TextBlock x:Name="Version" TextWrapping="NoWrap" Text="v1.0.0" TextAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="549,5,0,0" Height="26"/>
-            <TextBox x:Name="DirectoryPath" MouseLeftButtonUp="DirectoryPath_MouseLeftButtonUp" TextChanged="DirectoryPath_TextChanged" HorizontalAlignment="Left" Height="23" Margin="303,23,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="241" IsReadOnly="True" VerticalScrollBarVisibility="Disabled"/>
-            <Button x:Name="Browse" Click="Browse_Click" Content="Browse" HorizontalAlignment="Left" Margin="549,23,0,0" VerticalAlignment="Top" Width="75"/>
-            <TextBox x:Name="Parsed" TextChanged="Parsed_TextChanged" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" HorizontalAlignment="Left" Height="79" Margin="303,54,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="321" AcceptsReturn="True"/>
+            <TextBox x:Name="Parsed" TextChanged="Parsed_TextChanged" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" HorizontalAlignment="Left" Height="110" Margin="303,23,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="321" AcceptsReturn="True"/>
             <Label x:Name="StatusLabel" Content="Automatic Backup: OFF" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Margin="298,133,0,0" VerticalAlignment="Top" Width="160"/>
             <TextBlock TextWrapping="NoWrap" x:Name="Counter" Text="0 characters and 0 lines" TextAlignment="Right" HorizontalAlignment="Left" Margin="463,138,0,0" VerticalAlignment="Top" Width="161" Height="26"/>
             

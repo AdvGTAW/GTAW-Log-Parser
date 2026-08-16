@@ -73,7 +73,7 @@ namespace Parser.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please pick a non-root directory for your RAGEMP directory location..
+        ///   Looks up a localized string similar to FiveM does not require a game directory to parse the local GTAW chat..
         /// </summary>
         internal static string BadDirectoryPath {
             get {
@@ -118,7 +118,7 @@ namespace Parser.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid RAGEMP directory path..
+        ///   Looks up a localized string similar to The local FiveM GTAW chat is unavailable..
         /// </summary>
         internal static string InvalidDirectoryPath {
             get {

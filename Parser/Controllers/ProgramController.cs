@@ -1,124 +1,53 @@
-﻿using System;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using Parser.Localization;
-using System.Windows.Forms;
+using System.Net.Http;
+using System.Net.WebSockets;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Web.Script.Serialization;
+using System.Windows.Forms;
+using Parser.Localization;
 
 namespace Parser.Controllers
 {
     public static class ProgramController
     {
-        public const string AssemblyVersion = "4.1.8";
-        public static readonly string Version = $"v{AssemblyVersion}";
+        public const string AssemblyVersion = "4.1.9";
+        public static readonly string Version = "v" + AssemblyVersion;
         public const bool IsBetaVersion = false;
         public const string ParameterPrefix = "--";
+        public const string ResourceDirectory = "FiveM local NUI chat";
 
-        public static string ResourceDirectory;
-        public static string LogLocation;
+        private const string DevToolsTargetsUrl = "http://127.0.0.1:13172/json";
+        private const string RootUiUrl = "nui://game/ui/root.html";
+        private const string ClientFrameUrl = "https://cfx-nui-client/web/index.html";
 
         /// <summary>
-        /// Initializes the server IPs matching with the
-        /// current server depending on the chosen locale
-        /// and determines the newest log file if multiple
-        /// server IPs are used to connect to the server
+        /// The Mini has no configurable game directory. This method remains so
+        /// the original startup flow can keep its existing entry point.
         /// </summary>
         public static void InitializeServerIp()
         {
-            try
-            {
-                ResourceDirectory = "Not Found";
-                LogLocation = $"client_resources\\{@"play.gta.world_22005"}\\.storage";
-
-                // Return if the user has not picked
-                // a RAGEMP directory path yet
-                string directoryPath = Properties.Settings.Default.DirectoryPath;
-                if (string.IsNullOrWhiteSpace(directoryPath)) return;
-
-                // Get every directory in the client_resources directory found inside directoryPath
-                string[] resourceDirectories = Directory.GetDirectories(directoryPath + @"\client_resources");
-
-                // Store each GTA W .storage file path in a List (found by a tag in the .storage file)
-                List<string> potentialLogs = new List<string>();
-                foreach (string resourceDirectory in resourceDirectories)
-                {
-                    if (!File.Exists(resourceDirectory + @"\.storage"))
-                        continue;
-
-                    string log;
-                    using (StreamReader sr = new StreamReader(resourceDirectory + @"\.storage"))
-                    {
-                        log = sr.ReadToEnd();
-                    }
-
-                    if (!Regex.IsMatch(log, "\\\"server_version\\\":\\\"GTA World[^\"]*\""))
-                        continue;
-
-                    potentialLogs.Add(resourceDirectory);
-                }
-
-                if (potentialLogs.Count == 0) return;
-
-                // Compare the last write time on all .storage files in the List to find the latest one
-                foreach (var file in potentialLogs.Select(log => new FileInfo(log + @"\.storage")))
-                {
-                    file.Refresh();
-                }
-
-                while (potentialLogs.Count > 1)
-                {
-                    potentialLogs.Remove(DateTime.Compare(File.GetLastWriteTimeUtc(potentialLogs[0] + @"\.storage"), File.GetLastWriteTimeUtc(potentialLogs[1] + @"\.storage")) > 0 ? potentialLogs[1] : potentialLogs[0]);
-                }
-
-                // Save the directory name that houses the latest .storage file
-                int finalSeparator = potentialLogs[0].LastIndexOf(@"\", StringComparison.Ordinal);
-                if (finalSeparator == -1) return;
-
-                // Finally, set the log location
-                ResourceDirectory = potentialLogs[0].Substring(finalSeparator + 1, potentialLogs[0].Length - finalSeparator - 1);
-                LogLocation = $"client_resources\\{ResourceDirectory}\\.storage";
-            }
-            catch
-            {
-                // Silent exception
-            }
         }
 
         /// <summary>
-        /// Parses the most recent chat log found at the
-        /// selected RAGEMP directory path and returns it.
-        /// Displays an error if a chat log does not
-        /// exist or if it has an incorrect format
+        /// Reads the chat currently visible in GTAW's FiveM HUD.
+        /// Unlike the full Assistant, Mini intentionally does not retain a
+        /// session or make automatic backups.
         /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="removeTimestamps"></param>
-        /// <returns></returns>
-        public static string ParseChatLog(string directoryPath, bool removeTimestamps)
+        public static string ParseChatLog(bool removeTimestamps)
         {
             try
             {
-                // Read the chat log
-                string log;
-                using (StreamReader sr = new StreamReader(directoryPath + LogLocation))
-                {
-                    log = sr.ReadToEnd();
-                }
+                List<string> lines = ReadVisibleChatLines();
+                if (lines.Count == 0)
+                    throw new IOException();
 
-
-                // Use REGEX to parse the chat_log section only. Why REGEX? It's way faster than loading the massive JSON object in memory and then getting only the chat_log part. 
-
-
-                log = Regex.Match(log, "(?<=chat_log\\\":\\\")(.*?)(?=\\\\n\\\",\\\"rememberuser)").Value;
-
-                if (string.IsNullOrWhiteSpace(log))
-                    throw new IndexOutOfRangeException();
-
-
-                log = System.Net.WebUtility.HtmlDecode(log);
-                log = log.Replace("\\n", "\n");
-
+                string log = string.Join("\n", lines);
                 if (removeTimestamps)
                     log = Regex.Replace(log, @"\[\d{1,2}:\d{1,2}:\d{1,2}\] ", string.Empty);
 
@@ -126,9 +55,156 @@ namespace Parser.Controllers
             }
             catch
             {
-                MessageBox.Show(Strings.ParseError, Strings.Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "No FiveM GTAW chat is currently available. Open GTAW and wait for its HUD to load.",
+                    Strings.Error,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 return string.Empty;
             }
+        }
+
+        private static List<string> ReadVisibleChatLines()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            IDictionary<string, object> target = GetRootTarget(serializer);
+            string socketUrl = target["webSocketDebuggerUrl"] as string;
+            if (string.IsNullOrWhiteSpace(socketUrl))
+                throw new IOException();
+
+            using (ClientWebSocket socket = new ClientWebSocket())
+            {
+                socket.Options.Proxy = null;
+                using (CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2)))
+                    socket.ConnectAsync(new Uri(socketUrl), timeout.Token).GetAwaiter().GetResult();
+
+                int requestId = 0;
+                IDictionary<string, object> tree = Request(socket, serializer, ref requestId, "Page.getFrameTree", new Dictionary<string, object>());
+                IDictionary<string, object> clientFrame = FindClientFrame(DictionaryValue(tree, "frameTree"));
+                if (clientFrame == null || !clientFrame.ContainsKey("id"))
+                    throw new IOException();
+
+                IDictionary<string, object> world = Request(socket, serializer, ref requestId, "Page.createIsolatedWorld", new Dictionary<string, object>
+                {
+                    { "frameId", clientFrame["id"] },
+                    { "worldName", "gtaw-parser-mini-reader" },
+                    { "grantUniveralAccess", true }
+                });
+                if (!world.ContainsKey("executionContextId"))
+                    throw new IOException();
+
+                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => (el.innerText || '').replace(/\\s+/g, ' ').trim()).filter(Boolean))";
+                IDictionary<string, object> evaluation = Request(socket, serializer, ref requestId, "Runtime.evaluate", new Dictionary<string, object>
+                {
+                    { "expression", expression },
+                    { "contextId", world["executionContextId"] },
+                    { "returnByValue", true }
+                });
+
+                IDictionary<string, object> runtimeResult = DictionaryValue(evaluation, "result");
+                string value = runtimeResult != null && runtimeResult.ContainsKey("value") ? runtimeResult["value"] as string : "[]";
+                object[] values = serializer.DeserializeObject(value ?? "[]") as object[];
+                return values == null ? new List<string>() : values.OfType<string>().Where(line => !string.IsNullOrWhiteSpace(line)).ToList();
+            }
+        }
+
+        private static IDictionary<string, object> GetRootTarget(JavaScriptSerializer serializer)
+        {
+            string json;
+            using (HttpClientHandler handler = new HttpClientHandler { UseProxy = false })
+            using (HttpClient client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(2) })
+                json = client.GetStringAsync(DevToolsTargetsUrl).GetAwaiter().GetResult();
+
+            object[] targets = serializer.DeserializeObject(json) as object[];
+            if (targets != null)
+            {
+                foreach (object item in targets)
+                {
+                    IDictionary<string, object> target = item as IDictionary<string, object>;
+                    if (target != null && target.ContainsKey("url") && (target["url"] as string) == RootUiUrl)
+                        return target;
+                }
+            }
+
+            throw new IOException();
+        }
+
+        private static IDictionary<string, object> Request(ClientWebSocket socket, JavaScriptSerializer serializer, ref int requestId, string method, IDictionary<string, object> parameters)
+        {
+            int id = ++requestId;
+            string message = serializer.Serialize(new Dictionary<string, object>
+            {
+                { "id", id },
+                { "method", method },
+                { "params", parameters }
+            });
+            byte[] data = Encoding.UTF8.GetBytes(message);
+
+            using (CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2)))
+            {
+                socket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Text, true, timeout.Token).GetAwaiter().GetResult();
+                while (true)
+                {
+                    IDictionary<string, object> response = Receive(socket, serializer, timeout.Token);
+                    if (!response.ContainsKey("id") || Convert.ToInt32(response["id"]) != id)
+                        continue;
+                    if (response.ContainsKey("error"))
+                        throw new IOException();
+                    return DictionaryValue(response, "result") ?? new Dictionary<string, object>();
+                }
+            }
+        }
+
+        private static IDictionary<string, object> Receive(ClientWebSocket socket, JavaScriptSerializer serializer, CancellationToken token)
+        {
+            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[8192]);
+            using (MemoryStream stream = new MemoryStream())
+            {
+                WebSocketReceiveResult result;
+                do
+                {
+                    result = socket.ReceiveAsync(buffer, token).GetAwaiter().GetResult();
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        throw new IOException();
+                    stream.Write(buffer.Array, buffer.Offset, result.Count);
+                } while (!result.EndOfMessage);
+
+                return serializer.DeserializeObject(Encoding.UTF8.GetString(stream.ToArray())) as IDictionary<string, object>;
+            }
+        }
+
+        private static IDictionary<string, object> DictionaryValue(IDictionary<string, object> source, string key)
+        {
+            if (source == null || !source.ContainsKey(key))
+                return null;
+            return source[key] as IDictionary<string, object>;
+        }
+
+        private static IDictionary<string, object> FindClientFrame(IDictionary<string, object> frameTree)
+        {
+            if (frameTree == null)
+                return null;
+
+            IDictionary<string, object> frame = DictionaryValue(frameTree, "frame");
+            if (frame != null && frame.ContainsKey("url") && (frame["url"] as string) == ClientFrameUrl)
+                return frame;
+
+            object childrenObject;
+            if (!frameTree.TryGetValue("childFrames", out childrenObject))
+                return null;
+
+            IEnumerable children = childrenObject as IEnumerable;
+            if (children == null)
+                return null;
+
+            foreach (object child in children)
+            {
+                IDictionary<string, object> found = FindClientFrame(child as IDictionary<string, object>);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
     }
 }
