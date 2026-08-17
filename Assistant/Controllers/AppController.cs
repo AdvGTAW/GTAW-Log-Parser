@@ -9,7 +9,7 @@ namespace Assistant.Controllers
 {
     public static class AppController
     {
-        public const string AssemblyVersion = "5.0.0";
+        public const string AssemblyVersion = "5.0.1";
         public static readonly string Version = "v" + AssemblyVersion;
         public const bool IsBetaVersion = false;
         public static bool CanFollowSystemColor = false;

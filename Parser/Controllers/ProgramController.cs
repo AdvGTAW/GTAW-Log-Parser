@@ -10,13 +10,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
+using System.Globalization;
 using Parser.Localization;
 
 namespace Parser.Controllers
 {
     public static class ProgramController
     {
-        public const string AssemblyVersion = "5.0.0";
+        public const string AssemblyVersion = "5.0.1";
         public static readonly string Version = "v" + AssemblyVersion;
         public const bool IsBetaVersion = false;
         public const string ParameterPrefix = "--";
@@ -25,6 +26,7 @@ namespace Parser.Controllers
         private const string DevToolsTargetsUrl = "http://127.0.0.1:13172/json";
         private const string RootUiUrl = "nui://game/ui/root.html";
         private const string ClientFrameUrl = "https://cfx-nui-client/web/index.html";
+        private static readonly Regex TimestampPrefix = new Regex(@"^\[(?<time>\d{1,2}:\d{2}:\d{2})\]\s+");
 
         /// <summary>
         /// The Mini has no configurable game directory. This method remains so
@@ -47,7 +49,9 @@ namespace Parser.Controllers
                 if (lines.Count == 0)
                     throw new IOException();
 
-                string log = string.Join("\n", lines);
+                DateTime capturedAt = DateTime.Now;
+                DateTime sessionTimestamp = GetTimestamp(lines[0], capturedAt);
+                string log = CreateSessionHeader(sessionTimestamp) + "\n" + string.Join("\n", lines.Select(line => AddTimestamp(line, capturedAt)));
                 if (removeTimestamps)
                     log = Regex.Replace(log, @"\[\d{1,2}:\d{1,2}:\d{1,2}\] ", string.Empty);
 
@@ -62,6 +66,30 @@ namespace Parser.Controllers
                     MessageBoxIcon.Error);
                 return string.Empty;
             }
+        }
+
+        private static string CreateSessionHeader(DateTime timestamp)
+        {
+            string date = timestamp.ToString("dd/MMM/yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
+            return string.Format(CultureInfo.InvariantCulture, "[DATE: {0} | TIME: {1}]", date, timestamp.ToString("HH:mm:ss"));
+        }
+
+        private static string AddTimestamp(string line, DateTime capturedAt)
+        {
+            if (TimestampPrefix.IsMatch(line))
+                return line;
+
+            return string.Format(CultureInfo.InvariantCulture, "[{0}] {1}", capturedAt.ToString("HH:mm:ss"), line);
+        }
+
+        private static DateTime GetTimestamp(string line, DateTime fallback)
+        {
+            Match match = TimestampPrefix.Match(line);
+            DateTime parsed;
+            if (!match.Success || !DateTime.TryParseExact(match.Groups["time"].Value, "H:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+                return fallback;
+
+            return fallback.Date.Add(parsed.TimeOfDay);
         }
 
         private static List<string> ReadVisibleChatLines()
@@ -93,7 +121,7 @@ namespace Parser.Controllers
                 if (!world.ContainsKey("executionContextId"))
                     throw new IOException();
 
-                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => (el.innerText || '').replace(/\\s+/g, ' ').trim()).filter(Boolean))";
+                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => { const text = (el.innerText || '').replace(/\\s+/g, ' ').trim(); if (!text) return ''; const nodes = [el].concat(Array.from(el.querySelectorAll('*'))); let timestamp = ''; for (const node of nodes) { for (const attribute of Array.from(node.attributes || [])) { const match = String(attribute.value).match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) { timestamp = match[0]; break; } } if (!timestamp) { const match = String(getComputedStyle(node, '::before').content || '').match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) timestamp = match[0]; } if (timestamp) break; } return (timestamp ? '[' + timestamp + '] ' : '') + text; }).filter(Boolean))";
                 IDictionary<string, object> evaluation = Request(socket, serializer, ref requestId, "Runtime.evaluate", new Dictionary<string, object>
                 {
                     { "expression", expression },
