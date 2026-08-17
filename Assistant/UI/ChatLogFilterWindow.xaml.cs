@@ -451,7 +451,7 @@ namespace Assistant.UI
                 if (dialog.ShowDialog() != true) return;
                 using (StreamWriter sw = new StreamWriter(dialog.OpenFile()))
                 {
-                    sw.Write(Filtered.Text.Replace("\n", Environment.NewLine));
+                    sw.Write(Filtered.Text);
                 }
             }
             catch
@@ -471,7 +471,7 @@ namespace Assistant.UI
             if (string.IsNullOrWhiteSpace(Filtered.Text) && !Properties.Settings.Default.DisableErrorPopups)
                 MessageBox.Show(Strings.NothingFiltered, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
             else
-                Clipboard.SetText(Filtered.Text.Replace("\n", Environment.NewLine));
+                Clipboard.SetText(Filtered.Text);
         }
 
         /// <summary>

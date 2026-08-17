@@ -174,8 +174,8 @@ namespace Assistant.Controllers
                     return;
 
                 DateTime startedAt = FiveMChatCaptureController.SessionStartedAt;
-                string fileName = startedAt.ToString("dd.MMM.yyyy-HH.mm.ss") + ".txt";
-                string path = Path.Combine(backupPath, startedAt.ToString("yyyy"), startedAt.ToString("MMM")) + Path.DirectorySeparatorChar;
+                string fileName = startedAt.ToString("dd.MMM.yyyy-HH.mm.ss", System.Globalization.CultureInfo.InvariantCulture).ToUpperInvariant() + ".txt";
+                string path = Path.Combine(backupPath, startedAt.ToString("yyyy", System.Globalization.CultureInfo.InvariantCulture), startedAt.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture).ToUpperInvariant()) + Path.DirectorySeparatorChar;
 
                 // Make sure directory exists
                 if (!Directory.Exists(path))
@@ -187,7 +187,7 @@ namespace Assistant.Controllers
                 {
                     using (StreamWriter sw = new StreamWriter(path + fileName))
                     {
-                        sw.Write(parsed.Replace("\n", Environment.NewLine));
+                        sw.Write(parsed);
                     }
                 }
                 else
@@ -203,7 +203,7 @@ namespace Assistant.Controllers
                     // Write a temporary file
                     using (StreamWriter sw = new StreamWriter(path + ".temp"))
                     {
-                        sw.Write(parsed.Replace("\n", Environment.NewLine));
+                        sw.Write(parsed);
                     }
 
                     // Check to see which file is bigger

@@ -6,8 +6,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web.Script.Serialization;
+using System.Globalization;
 
 namespace Assistant.Controllers
 {
@@ -32,6 +34,7 @@ namespace Assistant.Controllers
         private static bool wasFiveMRunning;
         private static DateTime sessionStartedAt;
         private static List<string> previousVisibleLines = new List<string>();
+        private static readonly Regex TimestampPrefix = new Regex(@"^\[(?<time>\d{1,2}:\d{2}:\d{2})\]\s+");
 
         public static string SessionFilePath { get { return SessionFile; } }
         public static DateTime SessionStartedAt { get { return sessionStartedAt == DateTime.MinValue ? DateTime.Now : sessionStartedAt; } }
@@ -112,7 +115,7 @@ namespace Assistant.Controllers
                     {
                         lock (SyncRoot)
                         {
-                            sessionStartedAt = DateTime.Now;
+                            sessionStartedAt = DateTime.MinValue;
                             previousVisibleLines.Clear();
                             File.WriteAllText(SessionFile, string.Empty, new UTF8Encoding(false));
                         }
@@ -144,14 +147,54 @@ namespace Assistant.Controllers
                 return;
 
             int overlap = FindOverlap(previousVisibleLines, current);
+            List<string> newLines = current.Skip(overlap).ToList();
+            if (newLines.Count == 0)
+            {
+                previousVisibleLines = current;
+                return;
+            }
+
+            DateTime capturedAt = DateTime.Now;
+            DateTime sessionTimestamp = GetTimestamp(newLines[0], capturedAt);
+            bool startOfSession = !File.Exists(SessionFile) || new FileInfo(SessionFile).Length == 0;
             using (FileStream stream = new FileStream(SessionFile, FileMode.Append, FileAccess.Write, FileShare.Read))
             using (StreamWriter writer = new StreamWriter(stream, new UTF8Encoding(false)))
             {
-                foreach (string line in current.Skip(overlap))
-                    writer.WriteLine(line);
+                if (startOfSession)
+                {
+                    sessionStartedAt = sessionTimestamp;
+                    writer.WriteLine(CreateSessionHeader(sessionTimestamp));
+                }
+
+                foreach (string line in newLines)
+                    writer.WriteLine(AddTimestamp(line, capturedAt));
             }
 
             previousVisibleLines = current;
+        }
+
+        private static string CreateSessionHeader(DateTime timestamp)
+        {
+            string date = timestamp.ToString("dd/MMM/yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
+            return string.Format(CultureInfo.InvariantCulture, "[DATE: {0} | TIME: {1}]", date, timestamp.ToString("HH:mm:ss"));
+        }
+
+        private static string AddTimestamp(string line, DateTime capturedAt)
+        {
+            if (TimestampPrefix.IsMatch(line))
+                return line;
+
+            return string.Format(CultureInfo.InvariantCulture, "[{0}] {1}", capturedAt.ToString("HH:mm:ss"), line);
+        }
+
+        private static DateTime GetTimestamp(string line, DateTime fallback)
+        {
+            Match match = TimestampPrefix.Match(line);
+            DateTime parsed;
+            if (!match.Success || !DateTime.TryParseExact(match.Groups["time"].Value, "H:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+                return fallback;
+
+            return fallback.Date.Add(parsed.TimeOfDay);
         }
 
         private static int FindOverlap(IList<string> oldLines, IList<string> newLines)
@@ -186,7 +229,7 @@ namespace Assistant.Controllers
             public List<string> GetChatLines()
             {
                 EnsureConnected();
-                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => (el.innerText || '').replace(/\\s+/g, ' ').trim()).filter(Boolean))";
+                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => { const text = (el.innerText || '').replace(/\\s+/g, ' ').trim(); if (!text) return ''; const nodes = [el].concat(Array.from(el.querySelectorAll('*'))); let timestamp = ''; for (const node of nodes) { for (const attribute of Array.from(node.attributes || [])) { const match = String(attribute.value).match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) { timestamp = match[0]; break; } } if (!timestamp) { const match = String(getComputedStyle(node, '::before').content || '').match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) timestamp = match[0]; } if (timestamp) break; } return (timestamp ? '[' + timestamp + '] ' : '') + text; }).filter(Boolean))";
                 IDictionary<string, object> result = Request("Runtime.evaluate", new Dictionary<string, object>
                 {
                     { "expression", expression },

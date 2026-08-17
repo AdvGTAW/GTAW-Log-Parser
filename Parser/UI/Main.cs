@@ -79,7 +79,7 @@ namespace Parser.UI
                     return;
 
                 using (StreamWriter writer = new StreamWriter(SaveFileDialog.OpenFile()))
-                    writer.Write(Parsed.Text.Replace("\n", Environment.NewLine));
+                    writer.Write(Parsed.Text);
             }
             catch
             {
@@ -90,7 +90,7 @@ namespace Parser.UI
         private void CopyParsedToClipboard_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(Parsed.Text))
-                Clipboard.SetText(Parsed.Text.Replace("\n", Environment.NewLine));
+                Clipboard.SetText(Parsed.Text);
         }
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)

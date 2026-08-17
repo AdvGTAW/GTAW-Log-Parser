@@ -190,7 +190,7 @@ namespace Assistant.UI
                 if (dialog.ShowDialog() != true) return;
                 using (StreamWriter sw = new StreamWriter(dialog.OpenFile()))
                 {
-                    sw.Write(Parsed.Text.Replace("\n", Environment.NewLine));
+                    sw.Write(Parsed.Text);
                 }
             }
             catch
@@ -210,7 +210,7 @@ namespace Assistant.UI
             if (string.IsNullOrWhiteSpace(Parsed.Text) && !Properties.Settings.Default.DisableErrorPopups)
                 MessageBox.Show(Strings.NothingParsed, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
             else
-                Clipboard.SetText(Parsed.Text.Replace("\n", Environment.NewLine));
+                Clipboard.SetText(Parsed.Text);
         }
 
         /// <summary>
