@@ -58,6 +58,17 @@ namespace Assistant.Properties {
                 this["CheckForUpdatesAutomatically"] = value;
             }
         }
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LivePreview {
+            get {
+                return ((bool)(this["LivePreview"]));
+            }
+            set {
+                this["LivePreview"] = value;
+            }
+        }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]

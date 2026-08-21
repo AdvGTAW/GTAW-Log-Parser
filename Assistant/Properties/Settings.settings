@@ -11,6 +11,9 @@
     <Setting Name="CheckForUpdatesAutomatically" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="LivePreview" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
     <Setting Name="BackupChatLogAutomatically" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>

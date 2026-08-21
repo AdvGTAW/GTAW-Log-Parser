@@ -468,10 +468,17 @@ namespace Assistant.UI
         /// <param name="e"></param>
         private void CopyFilteredToClipboard_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(Filtered.Text) && !Properties.Settings.Default.DisableErrorPopups)
-                MessageBox.Show(Strings.NothingFiltered, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-            else
-                Clipboard.SetText(Filtered.Text);
+            if (string.IsNullOrWhiteSpace(Filtered.Text))
+            {
+                if (!Properties.Settings.Default.DisableErrorPopups)
+                    MessageBox.Show(Strings.NothingFiltered, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
+
+                return;
+            }
+
+            string error;
+            if (!MainWindow.TryCopyTextToClipboard(Filtered.Text, out error) && !Properties.Settings.Default.DisableErrorPopups)
+                MessageBox.Show(error, Strings.Error, MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         /// <summary>
