@@ -1,8 +1,8 @@
 # GTA World Chat Log Assistant - FiveM Adaptation
 
-This independent working copy captures the GTA World chat displayed by FiveM's local NUI and keeps the parser's automatic backup and filtering workflow.
+The assistant captures the GTA World chat displayed by FiveM's local NUI while preserving the parser's backup and filtering workflow. It can optionally keep the preview refreshed from the locally captured session, without modifying the game chat.
 
-It captures the GTA World chat displayed by FiveM's local NUI while preserving the parser's backup and filtering workflow.
+When a release contains verified SHA-256 asset digests, GTAWAssistant can download and install it in one click. Previous GTAWAssistant and ParserMini executables are kept in the user's local application data and can be restored from the menu.
 
 ![](header.png)
 
