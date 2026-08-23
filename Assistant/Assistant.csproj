@@ -69,6 +69,7 @@
     </ApplicationDefinition>
     <Compile Include="Controllers\BackupController.cs" />
     <Compile Include="Controllers\FiveMChatCaptureController.cs" />
+    <Compile Include="Controllers\UpdateController.cs" />
     <Compile Include="Controllers\StyleController.cs" />
     <Compile Include="UI\ProgramSettingsWindow.xaml.cs">
       <DependentUpon>ProgramSettingsWindow.xaml</DependentUpon>

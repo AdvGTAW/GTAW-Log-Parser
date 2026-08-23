@@ -13,6 +13,13 @@ using System.Globalization;
 
 namespace Assistant.Controllers
 {
+    public enum FiveMChatCaptureState
+    {
+        WaitingForFiveM,
+        WaitingForChat,
+        Capturing
+    }
+
     /// <summary>
     /// Captures the visible GTAW chat from FiveM's local NUI DevTools endpoint.
     /// This is a localhost-only, read-only connection while FiveM is running.
@@ -35,9 +42,11 @@ namespace Assistant.Controllers
         private static DateTime sessionStartedAt;
         private static List<string> previousVisibleLines = new List<string>();
         private static readonly Regex TimestampPrefix = new Regex(@"^\[(?<time>\d{1,2}:\d{2}:\d{2})\]\s+");
+        private static int captureState = (int) FiveMChatCaptureState.WaitingForFiveM;
 
         public static string SessionFilePath { get { return SessionFile; } }
         public static DateTime SessionStartedAt { get { return sessionStartedAt == DateTime.MinValue ? DateTime.Now : sessionStartedAt; } }
+        public static FiveMChatCaptureState CaptureState { get { return (FiveMChatCaptureState) captureState; } }
 
         public static void Initialize()
         {
@@ -97,6 +106,7 @@ namespace Assistant.Controllers
                     bool fiveMRunning = AppController.IsFiveMRunning();
                     if (!fiveMRunning)
                     {
+                        captureState = (int) FiveMChatCaptureState.WaitingForFiveM;
                         if (wasFiveMRunning)
                         {
                             lock (SyncRoot)
@@ -120,6 +130,7 @@ namespace Assistant.Controllers
                             File.WriteAllText(SessionFile, string.Empty, new UTF8Encoding(false));
                         }
                         wasFiveMRunning = true;
+                        captureState = (int) FiveMChatCaptureState.WaitingForChat;
                     }
 
                     lock (SyncRoot)
@@ -129,6 +140,7 @@ namespace Assistant.Controllers
                 }
                 catch
                 {
+                    captureState = (int) FiveMChatCaptureState.WaitingForChat;
                     lock (SyncRoot)
                     {
                         Reader.Close();
@@ -145,6 +157,8 @@ namespace Assistant.Controllers
             List<string> current = visibleLines.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).ToList();
             if (current.Count == 0)
                 return;
+
+            captureState = (int) FiveMChatCaptureState.Capturing;
 
             int overlap = FindOverlap(previousVisibleLines, current);
             List<string> newLines = current.Skip(overlap).ToList();

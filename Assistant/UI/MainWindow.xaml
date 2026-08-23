@@ -12,7 +12,7 @@
                       Closing="Main_Closing"
                       WindowTransitionsEnabled="True"
                       GlowBrush="{DynamicResource AccentColorBrush}"
-                      Title="GTA World FiveM Chat Log Assistant" Height="260" Width="638" IsMaxRestoreButtonEnabled="False" IsMinButtonEnabled="True" TitleCaps="False" ShowIconOnTitleBar="False" Icon="../Resources/AppIcon.ico">
+                      Title="GTA World FiveM Chat Log Assistant" Height="330" Width="638" IsMaxRestoreButtonEnabled="False" IsMinButtonEnabled="True" TitleCaps="False" ShowIconOnTitleBar="False" Icon="../Resources/AppIcon.ico">
 
     <Controls:MetroWindow.WindowButtonCommands>
         <Controls:WindowButtonCommands 
@@ -62,6 +62,7 @@
     <DockPanel>
         <Menu x:Name="MenuStrip" DockPanel.Dock="Top">
             <MenuItem x:Name="CheckForUpdatesToolStripMenuItem" Header="Check For Updates" Click="CheckForUpdatesToolStripMenuItem_Click"/>
+            <MenuItem x:Name="RestorePreviousVersionToolStripMenuItem" Header="Revert to Previous Release" Click="RestorePreviousVersionToolStripMenuItem_Click"/>
             <MenuItem x:Name="BackupSettingsToolStripMenuItem" Header="Automatic Backup Settings" Click="BackupSettingsToolStripMenuItem_Click"/>
             <MenuItem x:Name="FilterChatLogToolStripMenuItem" Header="Filter Chat Log" Click="FilterChatLogToolStripMenuItem_Click"/>
             <MenuItem x:Name="LanguageToolStripMenuItem" Header="Change Server" Visibility="Collapsed"/>
@@ -73,6 +74,7 @@
             <Image x:Name="Logo" HorizontalAlignment="Left" Height="140" VerticalAlignment="Top" Width="288" Source="../Resources/Logo.png" Margin="10,0,0,0" Stretch="Fill" MouseLeftButtonUp="Logo_MouseLeftButtonUp"/>
             <CheckBox x:Name="CheckForUpdatesOnStartup" Checked="CheckForUpdatesOnStartup_CheckedChanged" Unchecked="CheckForUpdatesOnStartup_CheckedChanged" Content="Check for updates automatically" HorizontalAlignment="Left" Margin="10,145,0,0" VerticalAlignment="Top" Width="288"/>
             <CheckBox x:Name="RemoveTimestamps" Checked="RemoveTimestamps_CheckedChanged" Unchecked="RemoveTimestamps_CheckedChanged" Content="Remove timestamps" HorizontalAlignment="Left" Margin="10,168,0,0" VerticalAlignment="Top" Width="288"/>
+            <CheckBox x:Name="LivePreview" Checked="LivePreview_CheckedChanged" Unchecked="LivePreview_CheckedChanged" Content="Live preview" HorizontalAlignment="Left" Margin="10,191,0,0" VerticalAlignment="Top" Width="288"/>
             <Controls:ProgressRing x:Name="UpdateCheckProgress"
                                    Width="16"
                                    Height="16"
@@ -84,12 +86,13 @@
 
             <TextBlock x:Name="Version" TextWrapping="NoWrap" Text="v1.0.0" TextAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="549,5,0,0" Height="26"/>
             <TextBox x:Name="Parsed" TextChanged="Parsed_TextChanged" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" HorizontalAlignment="Left" Height="110" Margin="303,23,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="321" AcceptsReturn="True"/>
-            <Label x:Name="StatusLabel" Content="Automatic Backup: OFF" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Margin="298,133,0,0" VerticalAlignment="Top" Width="160"/>
-            <TextBlock TextWrapping="NoWrap" x:Name="Counter" Text="0 characters and 0 lines" TextAlignment="Right" HorizontalAlignment="Left" Margin="463,138,0,0" VerticalAlignment="Top" Width="161" Height="26"/>
+            <Label x:Name="CaptureStatus" Content="Chat capture: Waiting for FiveM" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Margin="298,133,0,0" VerticalAlignment="Top" Width="326"/>
+            <Label x:Name="StatusLabel" Content="Automatic Backup: OFF" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Margin="298,153,0,0" VerticalAlignment="Top" Width="160"/>
+            <TextBlock TextWrapping="NoWrap" x:Name="Counter" Text="0 characters and 0 lines" TextAlignment="Right" HorizontalAlignment="Left" Margin="463,158,0,0" VerticalAlignment="Top" Width="161" Height="26"/>
             
-            <Button x:Name="Parse" Click="Parse_Click" Content="Parse" HorizontalAlignment="Left" Margin="303,159,0,0" VerticalAlignment="Top" Width="75"/>
-            <Button x:Name="SaveParsed" Click="SaveParsed_Click" Content="Save As" HorizontalAlignment="Left" Margin="383,159,0,0" VerticalAlignment="Top" Width="75"/>
-            <Button x:Name="CopyParsedToClipboard" Click="CopyParsedToClipboard_Click" Content="Copy To Clipboard" HorizontalAlignment="Left" Margin="463,159,0,0" VerticalAlignment="Top" Width="161"/>
+            <Button x:Name="Parse" Click="Parse_Click" Content="Parse" HorizontalAlignment="Left" Margin="303,179,0,0" VerticalAlignment="Top" Width="75"/>
+            <Button x:Name="SaveParsed" Click="SaveParsed_Click" Content="Save As" HorizontalAlignment="Left" Margin="383,179,0,0" VerticalAlignment="Top" Width="75"/>
+            <Button x:Name="CopyParsedToClipboard" Click="CopyParsedToClipboard_Click" Content="Copy To Clipboard" HorizontalAlignment="Left" Margin="463,179,0,0" VerticalAlignment="Top" Width="161"/>
         </Grid>
     </DockPanel>
 </Controls:MetroWindow>
