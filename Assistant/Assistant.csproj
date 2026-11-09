@@ -69,6 +69,9 @@
     </ApplicationDefinition>
     <Compile Include="Controllers\BackupController.cs" />
     <Compile Include="Controllers\FiveMChatCaptureController.cs" />
+    <Compile Include="..\Shared\ChatCaptureScript.cs">
+      <Link>Controllers\ChatCaptureScript.cs</Link>
+    </Compile>
     <Compile Include="Controllers\UpdateController.cs" />
     <Compile Include="Controllers\StyleController.cs" />
     <Compile Include="UI\ProgramSettingsWindow.xaml.cs">

@@ -121,10 +121,9 @@ namespace Parser.Controllers
                 if (!world.ContainsKey("executionContextId"))
                     throw new IOException();
 
-                const string expression = "JSON.stringify(Array.from(document.querySelectorAll('.chat__messages > li'), el => { const text = (el.innerText || '').replace(/\\s+/g, ' ').trim(); if (!text) return ''; const nodes = [el].concat(Array.from(el.querySelectorAll('*'))); let timestamp = ''; for (const node of nodes) { for (const attribute of Array.from(node.attributes || [])) { const match = String(attribute.value).match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) { timestamp = match[0]; break; } } if (!timestamp) { const match = String(getComputedStyle(node, '::before').content || '').match(/\\b\\d{1,2}:\\d{2}:\\d{2}\\b/); if (match) timestamp = match[0]; } if (timestamp) break; } return (timestamp ? '[' + timestamp + '] ' : '') + text; }).filter(Boolean))";
                 IDictionary<string, object> evaluation = Request(socket, serializer, ref requestId, "Runtime.evaluate", new Dictionary<string, object>
                 {
-                    { "expression", expression },
+                    { "expression", GTAWLogParser.Shared.ChatCaptureScript.Expression },
                     { "contextId", world["executionContextId"] },
                     { "returnByValue", true }
                 });
