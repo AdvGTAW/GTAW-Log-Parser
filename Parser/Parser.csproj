@@ -69,6 +69,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\LocalizationController.cs" />
+    <Compile Include="..\Shared\ChatCaptureScript.cs">
+      <Link>Controllers\ChatCaptureScript.cs</Link>
+    </Compile>
     <Compile Include="Localization\Strings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
